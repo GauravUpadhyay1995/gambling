@@ -1,0 +1,93 @@
+name: Deploy Frontend to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Production
+
+    steps:
+      - name: ⬇ Checkout Code
+        uses: actions/checkout@v3
+
+      - name: ⚙ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🧹 Run Lint (optional)
+        run: npm run lint
+
+      - name: 🏗 Build with ENV Vars
+        run: npm run build
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB: ${{ secrets.MONGODB_DB }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_AWS_ACCESS_KEY_ID: ${{ secrets.NEXT_PUBLIC_AWS_ACCESS_KEY_ID }}
+          NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY: ${{ secrets.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY }}
+          NEXT_PUBLIC_AWS_REGION: ${{ secrets.NEXT_PUBLIC_AWS_REGION }}
+          NEXT_PUBLIC_AWS_BUCKET_NAME: ${{ secrets.NEXT_PUBLIC_AWS_BUCKET_NAME }}
+          NEXT_PUBLIC_ENVIROMENT: ${{ secrets.NEXT_PUBLIC_ENVIROMENT }}
+          NEXT_PUBLIC_COMPANY_NAME: ${{ secrets.NEXT_PUBLIC_COMPANY_NAME }}
+          NEXT_PUBLIC_COMPANY_EMAIL: ${{ secrets.NEXT_PUBLIC_COMPANY_EMAIL }}
+          NEXT_PUBLIC_COMPANY_MOBILE_HELPLINE: ${{ secrets.NEXT_PUBLIC_COMPANY_MOBILE_HELPLINE }}
+          NEXT_PUBLIC_COMPANY_MOBILE_WHATSAPP: ${{ secrets.NEXT_PUBLIC_COMPANY_MOBILE_WHATSAPP }}
+
+      - name: 🔐 Validate SSH Secrets
+        run: |
+          if [ -z "${{ secrets.EC2_HOST }}" ]; then
+            echo "::error::EC2_HOST secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.EC2_USERNAME }}" ]; then
+            echo "::error::EC2_USERNAME secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.EC2_SSH_KEY }}" ]; then
+            echo "::error::EC2_SSH_KEY secret is not set"
+            exit 1
+          fi
+
+      - name: 🚀 Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "🔐 Setting permissions"
+            sudo git config --global --add safe.directory /var/www/html/wincoe
+            sudo chown -R $USER:$USER /var/www/html/wincoe
+
+            echo "📂 Switching to project directory"
+            cd /var/www/html/wincoe
+
+            echo "📥 Pulling latest code from main"
+            git pull origin main --no-rebase
+
+            echo "🧹 Cleaning previous builds and caches"
+            rm -rf node_modules .next .cache
+
+            echo "📥 Installing dependencies"
+            npm ci
+
+            echo "🔨 Building the Next.js application"
+            npm run build
+
+            echo "🔁 Restarting PM2 process"
+            pm2 delete WinCOE || true
+            pm2 start npm --name "WinCOE" -- run start
+            pm2 save
+
+            echo "✅ Deployment complete"
+
