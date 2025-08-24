@@ -3,6 +3,7 @@ import { asyncHandler } from '@/lib/asyncHandler';
 import { connectToDB } from '@/config/mongo';
 import { Customer } from '@/models/Customer';
 import { createCustomerSchema } from '@/lib/validations/customer.schema';
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
 
@@ -48,6 +49,8 @@ export const POST = asyncHandler(async (req: NextRequest) => {
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
     value.password = hashedPassword;
 
+
+
     const customerData: CreateCustomerBody = {
         ...value,
         isActive: rawBody.isActive ?? true,
@@ -56,12 +59,29 @@ export const POST = asyncHandler(async (req: NextRequest) => {
     // ✅ Insert into DB
     const createdCustomer = new Customer(customerData);
     await createdCustomer.save();
-
-    return NextResponse.json({
+    const token = generateToken({
+        id: createdCustomer._id.toString(),
+        mobile: createdCustomer.mobile,
+        name: createdCustomer.name,
+    });
+    const response = NextResponse.json({
         success: true,
         message: 'Customer registered successfully',
+        id: createdCustomer._id.toString(),
+        mobile: createdCustomer.mobile,
+        name: createdCustomer.name,
+        token: token,
 
     });
+    response.cookies.set('customer_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+    return response;
+
 })
 
 function generateSecurePassword(length = 12) {
@@ -73,3 +93,8 @@ function generateSecurePassword(length = 12) {
         specialChars[Math.floor(Math.random() * specialChars.length)] +
         chars[Math.floor(Math.random() * chars.length)];
 }
+const generateToken = (payload: object) => {
+    return jwt.sign(payload, process.env.JWT_SECRET!, {
+        expiresIn: '1d',
+    });
+};

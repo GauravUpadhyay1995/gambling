@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { FaCodeBranch } from "react-icons/fa";
+import { FaCodeBranch, FaTimes, FaCheck } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Simple cache mechanism
 const apiCache = new Map();
@@ -222,11 +223,13 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
     startDate: market.startDate,
     endDate: market.endDate,
     isActive: market.isActive,
+    isExpired: market.isExpired,
   });
 
   const [showStatusConfirm, setShowStatusConfirm] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Set selected ratings only once when market changes
   useEffect(() => {
@@ -321,170 +324,331 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
     onUpdate(market._id, updated);
     setShowModal(false);
   }, [market, selected, onUpdate]);
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3, ease: ["easeOut"] }
+    },
+    hover: {
+      y: -5,
+      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)",
+      transition: { duration: 0.2 }
+    }
+  };
 
+  const buttonVariants = {
+    hover: { scale: 1.05 },
+    tap: { scale: 0.95 }
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.2, ease: "easeOut" }
+    }
+  };
+
+  const ribbonVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.3, delay: 0.2 }
+    }
+  };
   return (
     <>
-      <div className="bg-[#0b1c2c] text-white p-4 rounded-xl shadow-lg flex flex-col space-y-3 relative group">
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        whileHover="hover"
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}
+        className="bg-gradient-to-br from-[#0f2e45] to-[#0a1723] text-white p-5 rounded-2xl shadow-xl flex flex-col space-y-4 relative group border border-gray-700 overflow-hidden"
+      >
         {/* Rating Mapping Button */}
-        <>
-          {form.isActive ? (
-            <FaCodeBranch
-              size={20}
-              className="cursor-pointer text-blue-600"
-              onClick={() => setShowModal(true)}
-            />
-          ) : (
-            <FaCodeBranch className="text-gray-400" />
-          )}
-
-          {/* Rating Modal */}
-          {showModal && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-              <div className="bg-[#0b1c2c] p-6 rounded-2xl shadow-lg w-80">
-                <h2 className="text-lg font-bold mb-4">Mapping Rating</h2>
-
-                <div className="flex flex-col gap-2">
-                  {ratings
-                    .filter((opt: any) => opt.isActive) // ✅ only active ratings
-                    .map((opt: any) => (
-                      <label key={opt._id} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selected.includes(opt._id)}
-                          onChange={() => toggleSelect(opt._id)}
-                        />
-                        {opt.ratingName}
-                      </label>
-                    ))}
-                </div>
-
-                <div className="flex justify-end mt-4 gap-2">
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="px-3 py-1 rounded bg-blue-600 text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveRatings}
-                    className="px-3 py-1 rounded bg-blue-600 text-white"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
+        {/* Expired Ribbon */}
+        {form.isExpired === "true" ? (
+          <div className="absolute top-0 left-0 overflow-hidden w-32 h-32">
+            <div className="absolute transform -rotate-45 bg-red-600 text-white text-xs font-bold px-2 py-2 top-2 -left-2 shadow-md rounded-xl">
+              CLOSED
             </div>
-          )}
+          </div>
+        ) : (
+          <div className="absolute top-0 left-0 overflow-hidden w-32 h-32">
+            <div className="absolute transform -rotate-45 bg-green-600 text-white text-xs font-bold px-2 py-2 top-2 -left-2 shadow-md rounded-xl">
+              OPEN
+            </div>
+          </div>
+        )}
 
-        </>
 
-        {/* Status Toggle Button */}
-        <button
-          type="button"
-          onClick={handleStatusUpdate}
-          className={`absolute top-2 right-2 ${form.isActive ? 'bg-green-600' : 'bg-orange-600'} rounded-full p-1.5 shadow-md opacity-100 transition-opacity duration-200`}
-          title={form.isActive ? 'Click To Deactivate Market' : 'Click To Activate Market'}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width={14}
-            height={14}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            className="text-white"
-          >
-            {form.isActive ? (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            )}
-          </svg>
-        </button>
+
 
         {/* Market Name */}
-        <input
-          className="bg-transparent border-b border-gray-400 focus:outline-none text-lg font-bold pr-6"
-          value={form.marketName}
-          onChange={(e) => setForm(prev => ({ ...prev, marketName: e.target.value }))}
-          onBlur={(e) => handleBlur("marketName", e.target.value)}
-          disabled={!form.isActive}
-        />
+        <div className="text-center mb-3 pt-2">
+          <motion.input
+            whileFocus={{ scale: 1.02 }}
+            className="bg-transparent text-center border-b-2 border-gray-600 focus:border-blue-500 focus:outline-none text-xl font-bold w-full pb-2 transition-colors"
+            value={form.marketName}
+            onChange={(e) => setForm(prev => ({ ...prev, marketName: e.target.value }))}
+            onBlur={(e) => handleBlur("marketName", e.target.value)}
+            disabled={!form.isActive}
+          />
+        </div>
 
         {/* Values */}
-        <div className="flex justify-between text-xl font-bold">
+        <div className="flex justify-center space-x-6 text-xl font-bold mb-4">
           {["a", "b", "c"].map((field) => (
-            <input
+            <motion.div
               key={field}
-              className="w-16 text-center bg-transparent border-b border-gray-500 focus:outline-none"
-              value={form[field as "a" | "b" | "c"]}
-              onChange={(e) => setForm(prev => ({ ...prev, [field]: e.target.value }))}
-              onBlur={() => handleBlur(field, form[field as "a" | "b" | "c"])}
-              disabled={!form.isActive}
-            />
+              className="flex flex-col items-center"
+              whileHover={{ y: -3 }}
+              transition={{ duration: 0.2 }}
+            >
+
+              <motion.input
+                whileFocus={{ scale: 1.05 }}
+                className="w-14 text-center bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 py-2 backdrop-blur-sm"
+                value={form[field as "a" | "b" | "c"]}
+                onChange={(e) => setForm(prev => ({ ...prev, [field]: e.target.value }))}
+                onBlur={() => handleBlur(field, form[field as "a" | "b" | "c"])}
+                disabled={!form.isActive}
+              />
+            </motion.div>
           ))}
         </div>
 
         {/* Start & End Time */}
-        <div className="flex justify-between mt-4">
-          <input
-            type="time"
-            className="bg-orange-600 px-3 py-1 rounded-lg text-sm text-black"
-            value={toTimeInput(form.startDate)}
-            onChange={(e) => handleTimeChange("startDate", e.target.value)}
-            onBlur={() => handleBlur("startDate", form.startDate)}
-            disabled={!form.isActive}
-          />
-
-          <input
-            type="time"
-            className="bg-orange-600 px-3 py-1 rounded-lg text-sm text-black"
-            value={toTimeInput(form.endDate)}
-            onChange={(e) => handleTimeChange("endDate", e.target.value)}
-            onBlur={() => handleBlur("endDate", form.endDate)}
-            disabled={!form.isActive}
-          />
-        </div>
-      </div>
-
-      {/* Status Update Confirmation Modal */}
-      {showStatusConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-[#0b1c2c] rounded-xl p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-white">Are You Sure?</h2>
-              <button onClick={cancelStatusUpdate} className="text-gray-400 hover:text-white">
-                ✕
-              </button>
+        <motion.div
+          className="flex justify-between items-center bg-[#132b3f] p-3 rounded-xl border border-gray-600/50"
+          whileHover={{ y: -2 }}
+          transition={{ duration: 0.2 }}
+        >
+          <div className="text-center flex-1">
+            <div className="text-xs text-gray-400 mb-1">Start</div>
+            <div className="text-sm text-white font-medium bg-gray-800/50 py-1 px-2 rounded-lg border border-gray-700">
+              <motion.input
+                whileFocus={{ scale: 1.05 }}
+                type="time"
+                className="bg-transparent text-center text-xs text-blue-400 focus:outline-none w-full mt-1"
+                value={toTimeInput(form.startDate)}
+                onChange={(e) => handleTimeChange("startDate", e.target.value)}
+                onBlur={() => handleBlur("startDate", form.startDate)}
+                disabled={!form.isActive}
+              />
             </div>
 
-            <p className="text-gray-300 mb-6">
-              {form.isActive
-                ? "Are you sure you want to deactivate this market?"
-                : "Are you sure you want to activate this market?"
-              }
-            </p>
+          </div>
 
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={cancelStatusUpdate}
-                className="px-4 py-2 text-gray-300 hover:text-white"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmStatusUpdate}
-                className={form.isActive ? "bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg" : "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"}
-              >
-                {form.isActive ? "Deactivate" : "Activate"}
-              </button>
+          <div className="text-gray-500 mx-2 self-center">-</div>
+
+          <div className="text-center flex-1">
+            <div className="text-xs text-gray-400 mb-1">End</div>
+            <div className="text-sm text-white font-medium bg-gray-800/50 py-1 px-2 rounded-lg border border-gray-700">
+              <motion.input
+                whileFocus={{ scale: 1.05 }}
+                type="time"
+                className="bg-transparent text-right text-xs text-blue-400 focus:outline-none w-full mt-1"
+                value={toTimeInput(form.endDate)}
+                onChange={(e) => handleTimeChange("endDate", e.target.value)}
+                onBlur={() => handleBlur("endDate", form.endDate)}
+                disabled={!form.isActive}
+              />
             </div>
           </div>
-        </div>
-      )}
+
+        </motion.div>
+
+        <motion.div
+          className={`text-xs font-semibold text-center mt-1 py-1 rounded-full ${form.isActive
+            ? 'bg-green-900/30 text-green-400'
+            : 'bg-red-900/30 text-red-400'
+            }`}
+          animate={{
+            scale: [1, 1.05, 1],
+          }}
+          transition={{
+            duration: 2,
+            repeat: form.isActive ? Infinity : 0,
+            repeatType: "reverse"
+          }}
+        >
+          {form.isActive ? '🟢 ACTIVE' : '🔴 INACTIVE'}
+        </motion.div>
+
+        <motion.div
+          className="flex justify-center items-center space-x-3"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {/* First button: branch */}
+          {(form.isActive && form.isExpired === "false") ? (
+            <FaCodeBranch
+              size={20}
+              className="cursor-pointer text-blue-400 hover:text-blue-300 transition-colors"
+              onClick={() => setShowModal(true)}
+            />
+          ) : (
+            <FaCodeBranch size={20} className="text-gray-600" />
+          )}
+
+          {/* Second button: status toggle */}
+          <motion.button
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            type="button"
+            onClick={handleStatusUpdate}
+            className={`rounded-full p-2 shadow-lg ${form.isActive
+              ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+              : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+              } transition-all duration-200`}
+            title={form.isActive ? "Deactivate Market" : "Activate Market"}
+          >
+            {form.isActive ? (
+              <FaCheck size={12} className="text-white" />
+            ) : (
+              <FaTimes size={12} className="text-white" />
+            )}
+          </motion.button>
+        </motion.div>
+      </motion.div>
+
+      {/* Rating Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 p-4"
+            onClick={() => setShowModal(false)}
+          >
+            <motion.div
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="bg-gradient-to-b from-[#0f2e45] to-[#0a1723] border border-gray-700 p-6 rounded-2xl shadow-2xl w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-bold mb-5 text-white text-center">Mapping Rating</h2>
+
+              <div className="flex flex-col gap-3 max-h-60 overflow-y-auto pr-2">
+                {ratings
+                  .filter((opt: any) => opt.isActive)
+                  .map((opt: any) => (
+                    <motion.label
+                      key={opt._id}
+                      className="flex items-center gap-3 cursor-pointer p-2 hover:bg-[#132b3f] rounded-lg transition-colors"
+                      whileHover={{ x: 5 }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(opt._id)}
+                        onChange={() => toggleSelect(opt._id)}
+                        className="w-4 h-4 text-blue-500 bg-gray-800 border-gray-700 rounded focus:ring-blue-600 focus:ring-offset-gray-800"
+                      />
+                      <span className="text-white">{opt.ratingName}</span>
+                    </motion.label>
+                  ))}
+              </div>
+
+              <div className="flex justify-end mt-6 gap-3">
+                <motion.button
+                  variants={buttonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  variants={buttonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                  onClick={handleSaveRatings}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-all"
+                >
+                  Save
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Status Update Confirmation Modal */}
+      <AnimatePresence>
+        {showStatusConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 p-4"
+          >
+            <motion.div
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="bg-gradient-to-b from-[#0f2e45] to-[#0a1723] border border-gray-700 rounded-2xl p-6 w-full max-w-md"
+            >
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-xl font-bold text-white">Confirm Action</h2>
+                <motion.button
+                  onClick={cancelStatusUpdate}
+                  className="text-gray-400 hover:text-white text-xl"
+                  whileHover={{ rotate: 90 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  ×
+                </motion.button>
+              </div>
+
+              <p className="text-gray-300 mb-6 text-center">
+                {form.isActive
+                  ? "Are you sure you want to deactivate this market?"
+                  : "Are you sure you want to activate this market?"
+                }
+              </p>
+
+              <div className="flex justify-center space-x-4">
+                <motion.button
+                  variants={buttonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                  type="button"
+                  onClick={cancelStatusUpdate}
+                  className="px-5 py-2 text-gray-300 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  variants={buttonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                  type="button"
+                  onClick={confirmStatusUpdate}
+                  className={`px-5 py-2 rounded-lg text-white transition-all ${form.isActive
+                    ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                    : "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+                    }`}
+                >
+                  {form.isActive ? "Deactivate" : "Activate"}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
