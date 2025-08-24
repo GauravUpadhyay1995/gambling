@@ -15,8 +15,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'The Wadhwani Innovation Network | Centre of Excellence (WIN CoE)',
-  description: 'The Wadhwani Innovation Network',
+  title: 'Kalyan Master 7',
+  description: 'Kalyan Master 7',
   icons: {
     icon: "/favicon.ico",
   },

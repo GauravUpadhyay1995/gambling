@@ -21,6 +21,7 @@ import {
 
 } from "../icons/index";
 import { GiClubs } from "react-icons/gi";
+import { MdOutlineCurrencyExchange } from "react-icons/md";
 import SidebarWidget from "./SidebarWidget";
 import { usePermissions } from '@/hooks/usePermissions';
 import Image from "next/image";
@@ -49,18 +50,22 @@ const AppSidebar: React.FC = () => {
       path: "/admin",
     },
     {
-      name: "Users",
-      icon: <UserCircleIcon />,
-      path: "/admin/users-list",
+      name: "Customers",
+      icon: <GiClubs  size={20}/>,
+       path: "/admin/customers",
     },
      {
-      name: "Markets",
-      icon: <GiClubs />,
-       path: "/admin/markets",
+      name: "Ratings",
+      icon:<MdOutlineCurrencyExchange size={20} />,
+      path: "/admin/ratings",
     },
    
+     {
+      name: "Markets",
+      icon: <GiClubs  size={20}/>,
+       path: "/admin/markets",
+    },
     
-   
     {
       name: "Winners",
      icon: <ShootingStarIcon />,
@@ -79,6 +84,11 @@ const AppSidebar: React.FC = () => {
       subItems: [
         { name: "All Payment", path: "/admin/payments", pro: false },
       ],
+    },
+     {
+      name: "Users",
+      icon: <UserCircleIcon />,
+      path: "/admin/users-list",
     },
   ];
 
@@ -341,7 +351,7 @@ const AppSidebar: React.FC = () => {
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-400 bg-clip-text text-transparent">
 
                 <Image
-                  src={theme === "dark" ? "/images/logo/nagraj.png" : "/images/logo/nagraj.png"}
+                 src={process.env.NEXT_PUBLIC_COMPANY_LOGO || "/images/logo/logo.png"}
                   alt="WIN CoE"
                   width={100}
                   height={10}

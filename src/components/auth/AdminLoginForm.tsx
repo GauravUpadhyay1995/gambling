@@ -208,7 +208,7 @@ export default function AdminLoginForm() {
                 >
                   <div className="flex justify-center items-center">
                     <Image
-                      src="/images/logo/nagraj.png"
+                     src={process.env.NEXT_PUBLIC_COMPANY_LOGO || "/images/logo/logo.png"}
                       alt="Company Logo"
                       width={100}
                       height={100}

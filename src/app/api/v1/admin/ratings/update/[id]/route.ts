@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDB } from '@/config/mongo';
-import { Market } from '@/models/Market';
+import { Rating } from '@/models/Rating';
 import { asyncHandler } from '@/lib/asyncHandler';
 import { Types } from 'mongoose';
 
@@ -8,21 +8,20 @@ export const PATCH = asyncHandler(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     await connectToDB();
 
-    const marketId = params?.id;
+    const ratingId = params?.id;
 
-    if (!Types.ObjectId.isValid(marketId)) {
+    if (!Types.ObjectId.isValid(ratingId)) {
       return NextResponse.json(
-        { success: false, message: 'Invalid market ID' },
+        { success: false, message: 'Invalid rating ID' },
         { status: 400 }
       );
     }
 
     const body = await req.json();
-    console.log("Update Market Body:", body);
 
-    // Update market
-    const updatedMarket = await Market.findByIdAndUpdate(
-      marketId,
+    // Update rating
+    const updatedRating = await Rating.findByIdAndUpdate(
+      ratingId,
       { ...body, updatedAt: new Date() }, // overwrite with new data
       { new: true, runValidators: true }  // return updated doc & validate
     )
@@ -30,9 +29,9 @@ export const PATCH = asyncHandler(
       .select('-__v') // remove unwanted fields
       .exec();
 
-    if (!updatedMarket) {
+    if (!updatedRating) {
       return NextResponse.json(
-        { success: false, message: 'Market not found' },
+        { success: false, message: 'Rating not found' },
         { status: 404 }
       );
     }
@@ -40,8 +39,8 @@ export const PATCH = asyncHandler(
     return NextResponse.json(
       {
         success: true,
-        message: 'Market updated successfully',
-        data: updatedMarket,
+        message: 'Rating updated successfully',
+        data: updatedRating,
       },
       { headers: { 'Cache-Control': 'no-store' } } // prevent stale caching
     );

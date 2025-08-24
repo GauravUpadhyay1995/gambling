@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
-  title: "Users List | WIN CoE",
+  title: "Users List | Kalyan Master 7",
   description: "Users List",
 };
 

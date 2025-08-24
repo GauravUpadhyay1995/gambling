@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import Feature from '@/components/common/Feature';
 import Review from '@/components/common/Review';
 import Market from '@/components/common/Market';
+import Rating from '@/components/common/Rating';
 
 export default function HomePage() {
     const [mounted, setMounted] = useState(false);
@@ -83,7 +84,7 @@ export default function HomePage() {
     return (
         <div className="min-h-screen flex flex-col  text-gray-800 dark:text-white dark:from-gray-900 dark:to-gray-800">
             <Header />
-            
+
             <main className="flex-grow bg-gradient-to-br from-orange-400 to-blue-900">
                 <ScrollLinked />
 
@@ -91,16 +92,10 @@ export default function HomePage() {
                 <section className=" relative min-h-screen pt-24 overflow-hidden shadow-xl">
                     <Carousel images={images} />
                 </section>
-              
-                    <Feature />
-               
-              
-                    <Review />
-              
-              
-                    <Market />
-               
-               
+                <Feature />
+                <Rating />
+                <Review />
+                <Market />
             </main>
             <Footer />
         </div>

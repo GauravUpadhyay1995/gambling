@@ -150,7 +150,7 @@ const Footer = () => {
                 whileTap={{ scale: 0.97 }}
               >
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <Image src="/images/logo/nagraj.png" alt="WIN CoE Logo" width={100} height={10} priority />
+                  <Image src={process.env.NEXT_PUBLIC_COMPANY_LOGO || "/images/logo/logo.png"} alt="WIN CoE Logo" width={100} height={10} priority />
                 </div>
               </motion.span>
             </Link>

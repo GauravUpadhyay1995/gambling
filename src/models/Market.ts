@@ -6,14 +6,15 @@ const marketSchema = new Schema({
         required: true,
         trim: true,
     },
-
-    marketValue:
-        {
-            a: { type: String, required: true, default: '***' },
-            b: { type: String, required: true, default: '**' },
-            c: { type: String, required: true, default: '***' },
-        },
-   
+    marketValue: {
+        a: { type: String, required: true, default: '***' },
+        b: { type: String, required: true, default: '**' },
+        c: { type: String, required: true, default: '***' },
+    },
+    ratings: [{
+        type: Types.ObjectId,
+        ref: "Rating",
+    }],
     startDate: {
         type: Date,
         required: true,
@@ -38,6 +39,5 @@ const marketSchema = new Schema({
     },
 }, { timestamps: true });
 
-export const Market = mongoose.models.Market
-  ? mongoose.model('Market')
-  : mongoose.model('Market', marketSchema);
+// Fixed model export - check if model exists properly
+export const Market = mongoose.models.Market || mongoose.model('Market', marketSchema);

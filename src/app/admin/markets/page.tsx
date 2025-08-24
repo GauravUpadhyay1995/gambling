@@ -1,21 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { FaCodeBranch } from "react-icons/fa";
+
+// Simple cache mechanism
+const apiCache = new Map();
 
 export default function MarketList() {
   const [markets, setMarkets] = useState<any[]>([]);
+  const [ratings, setRatings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const hasFetchedMarkets = useRef(false);
+  const hasFetchedRatings = useRef(false);
 
-  // Fetch market list
-  const fetchMarkets = async () => {
+  // Fetch market list with caching
+  const fetchMarkets = useCallback(async () => {
+    if (hasFetchedMarkets.current) return;
+
+    const cacheKey = 'markets-list';
+    const cached = apiCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < 30000) {
+      setMarkets(cached.data);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const res = await fetch("/api/v1/admin/markets/list?source=backend");
       const result = await res.json();
       if (result.success) {
         setMarkets(result.data);
+        apiCache.set(cacheKey, {
+          data: result.data,
+          timestamp: Date.now()
+        });
+        hasFetchedMarkets.current = true;
       } else {
         setError(result.message || "Failed to load markets");
       }
@@ -24,14 +47,43 @@ export default function MarketList() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Fetch on mount
-  useEffect(() => {
-    fetchMarkets();
   }, []);
 
-  // Add this useEffect to handle body class changes
+  // Fetch ratings with caching
+  const fetchRatings = useCallback(async () => {
+    if (hasFetchedRatings.current) return;
+
+    const cacheKey = 'ratings-list';
+    const cached = apiCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < 30000) {
+      setRatings(cached.data);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/v1/admin/ratings/list?source=backend");
+      const result = await res.json();
+      if (result.success) {
+        setRatings(result.data);
+        apiCache.set(cacheKey, {
+          data: result.data,
+          timestamp: Date.now()
+        });
+        hasFetchedRatings.current = true;
+      }
+    } catch (err) {
+      console.log("Failed to load ratings");
+    }
+  }, []);
+
+  // Fetch data on mount only once
+  useEffect(() => {
+    fetchMarkets();
+    fetchRatings();
+  }, [fetchMarkets, fetchRatings]);
+
+  // Handle blur effect for modals
   useEffect(() => {
     const header = document.querySelector('header');
     const aside = document.querySelector('aside');
@@ -44,7 +96,6 @@ export default function MarketList() {
       if (aside) aside.classList.remove('blur-sm');
     }
 
-    // Cleanup on component unmount
     return () => {
       if (header) header.classList.remove('blur-sm');
       if (aside) aside.classList.remove('blur-sm');
@@ -52,35 +103,41 @@ export default function MarketList() {
   }, [showAddModal]);
 
   // Update API
-  const updateMarket = async (id: string, updated: any) => {
+  const updateMarket = useCallback(async (id: string, updated: any) => {
     try {
       await fetch(`/api/v1/admin/markets/update/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),
       });
-      fetchMarkets(); // refresh list after update
+      // Invalidate cache
+      apiCache.delete('markets-list');
+      hasFetchedMarkets.current = false;
+      fetchMarkets();
     } catch (err) {
       console.error("Update failed", err);
     }
-  };
+  }, [fetchMarkets]);
 
-  // Status update function (toggle isActive)
-  const updateMarketStatus = async (id: string, currentStatus: boolean) => {
+  // Status update function
+  const updateMarketStatus = useCallback(async (id: string, currentStatus: boolean) => {
     try {
       await fetch(`/api/v1/admin/markets/update/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !currentStatus }),
       });
-      fetchMarkets(); // refresh list after update
+      // Invalidate cache
+      apiCache.delete('markets-list');
+      hasFetchedMarkets.current = false;
+      fetchMarkets();
     } catch (err) {
       console.error("Status update failed", err);
     }
-  };
+  }, [fetchMarkets]);
 
   // Add new market
-  const addMarket = async (newMarket: any) => {
+  const addMarket = useCallback(async (newMarket: any) => {
     try {
       const response = await fetch("/api/v1/admin/markets/create", {
         method: "POST",
@@ -90,14 +147,17 @@ export default function MarketList() {
 
       if (response.ok) {
         setShowAddModal(false);
-        fetchMarkets(); // Refresh the list
+        // Invalidate cache
+        apiCache.delete('markets-list');
+        hasFetchedMarkets.current = false;
+        fetchMarkets();
       } else {
         console.error("Failed to add market");
       }
     } catch (err) {
       console.error("Add market failed", err);
     }
-  };
+  }, [fetchMarkets]);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
@@ -115,26 +175,28 @@ export default function MarketList() {
           </button>
         </div>
 
-        {/* ✅ Active Markets */}
+        {/* Active Markets */}
         <h2 className="text-xl text-center font-semibold mb-4 text-green-500">ACTIVE MARKETS</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           {markets.filter((m) => m.isActive).map((market) => (
             <MarketCard
               key={market._id}
               market={market}
+              ratings={ratings}
               onUpdate={updateMarket}
               onStatusUpdate={updateMarketStatus}
             />
           ))}
         </div>
 
-        {/* ✅ Inactive Markets */}
+        {/* Inactive Markets */}
         <h2 className="text-xl text-center font-semibold mb-4 text-red-500">INACTIVE MARKETS</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {markets.filter((m) => !m.isActive).map((market) => (
             <MarketCard
               key={market._id}
               market={market}
+              ratings={ratings}
               onUpdate={updateMarket}
               onStatusUpdate={updateMarketStatus}
             />
@@ -148,10 +210,10 @@ export default function MarketList() {
       )}
     </div>
   );
-
 }
 
-function MarketCard({ market, onUpdate, onStatusUpdate }: any) {
+// MarketCard component - no API calls here
+function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
   const [form, setForm] = useState({
     marketName: market.marketName,
     a: market.marketValue?.a || "",
@@ -163,46 +225,49 @@ function MarketCard({ market, onUpdate, onStatusUpdate }: any) {
   });
 
   const [showStatusConfirm, setShowStatusConfirm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
 
-  // Auto update when blur
-// Auto update when blur
-const handleBlur = (field: string, value: any) => {
-  if (value === "") return;
+  // Set selected ratings only once when market changes
+  useEffect(() => {
+    if (market.ratings) {
+      setSelected(market.ratings.map((r: any) => r._id || r));
+    }
+  }, [market.ratings]);
 
-  let updated: any = {};
+  // Handle blur with optimization
+  const handleBlur = useCallback((field: string, value: any) => {
+    if (value === "") return;
 
-  if (["a", "b", "c"].includes(field)) {
-    // Only update if the value is different
-    if (value === market.marketValue?.[field]) return; 
+    let updated: any = {};
 
-    updated = { marketValue: { ...market.marketValue, [field]: value } };
-  } else {
-    // Only update if the value is different
-    if (value === market[field]) return; 
+    if (["a", "b", "c"].includes(field)) {
+      if (value === market.marketValue?.[field]) return;
+      updated = { marketValue: { ...market.marketValue, [field]: value } };
+    } else {
+      if (value === market[field]) return;
+      updated = { [field]: value };
+    }
 
-    updated = { [field]: value };
-  }
-
-  onUpdate(market._id, updated);
-};
-
+    onUpdate(market._id, updated);
+  }, [market, onUpdate]);
 
   // Handle status update confirmation
-  const handleStatusUpdate = () => {
+  const handleStatusUpdate = useCallback(() => {
     setShowStatusConfirm(true);
-  };
+  }, []);
 
-  const confirmStatusUpdate = () => {
+  const confirmStatusUpdate = useCallback(() => {
     onStatusUpdate(market._id, form.isActive);
     setShowStatusConfirm(false);
-  };
+  }, [market._id, form.isActive, onStatusUpdate]);
 
-  const cancelStatusUpdate = () => {
+  const cancelStatusUpdate = useCallback(() => {
     setShowStatusConfirm(false);
-  };
+  }, []);
 
   // Format time input for IST
-  const toTimeInput = (dateString: string) => {
+  const toTimeInput = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("en-IN", {
       hour: "2-digit",
@@ -210,21 +275,22 @@ const handleBlur = (field: string, value: any) => {
       hour12: false,
       timeZone: "Asia/Kolkata",
     });
-  };
+  }, []);
 
-  const handleTimeChange = (field: "startDate" | "endDate", value: string) => {
+  const handleTimeChange = useCallback((field: "startDate" | "endDate", value: string) => {
     const date = new Date(form[field]);
     const [h, m] = value.split(":");
     date.setHours(Number(h), Number(m), 0, 0);
-    setForm({ ...form, [field]: date.toISOString() });
-  };
+    setForm(prev => ({ ...prev, [field]: date.toISOString() }));
+  }, [form.startDate, form.endDate]);
 
+  // Handle modal blur effects
   useEffect(() => {
     const header = document.querySelector('header');
     const aside = document.querySelector('aside');
     const mainDiv = document.getElementById('mainDiv');
 
-    if (showStatusConfirm) {
+    if (showStatusConfirm || showModal) {
       if (header) header.classList.add('blur-sm');
       if (aside) aside.classList.add('blur-sm');
       if (mainDiv) mainDiv.classList.add('blur-sm');
@@ -234,18 +300,85 @@ const handleBlur = (field: string, value: any) => {
       if (mainDiv) mainDiv.classList.remove('blur-sm');
     }
 
-    // Cleanup on component unmount
     return () => {
       if (header) header.classList.remove('blur-sm');
       if (aside) aside.classList.remove('blur-sm');
       if (mainDiv) mainDiv.classList.remove('blur-sm');
     };
-  }, [showStatusConfirm]);
+  }, [showStatusConfirm, showModal]);
+
+  const toggleSelect = useCallback((value: string) => {
+    setSelected((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  }, []);
+
+  const handleSaveRatings = useCallback(() => {
+    const updated = {
+      ...market,
+      ratings: selected,
+    };
+    onUpdate(market._id, updated);
+    setShowModal(false);
+  }, [market, selected, onUpdate]);
 
   return (
     <>
-      <div className=" bg-[#0b1c2c] text-white p-4 rounded-xl shadow-lg flex flex-col space-y-3 relative group">
-        {/* Status Update Button */}
+      <div className="bg-[#0b1c2c] text-white p-4 rounded-xl shadow-lg flex flex-col space-y-3 relative group">
+        {/* Rating Mapping Button */}
+        <>
+          {form.isActive ? (
+            <FaCodeBranch
+              size={20}
+              className="cursor-pointer text-blue-600"
+              onClick={() => setShowModal(true)}
+            />
+          ) : (
+            <FaCodeBranch className="text-gray-400" />
+          )}
+
+          {/* Rating Modal */}
+          {showModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+              <div className="bg-[#0b1c2c] p-6 rounded-2xl shadow-lg w-80">
+                <h2 className="text-lg font-bold mb-4">Mapping Rating</h2>
+
+                <div className="flex flex-col gap-2">
+                  {ratings
+                    .filter((opt: any) => opt.isActive) // ✅ only active ratings
+                    .map((opt: any) => (
+                      <label key={opt._id} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selected.includes(opt._id)}
+                          onChange={() => toggleSelect(opt._id)}
+                        />
+                        {opt.ratingName}
+                      </label>
+                    ))}
+                </div>
+
+                <div className="flex justify-end mt-4 gap-2">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="px-3 py-1 rounded bg-blue-600 text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveRatings}
+                    className="px-3 py-1 rounded bg-blue-600 text-white"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </>
+
+        {/* Status Toggle Button */}
         <button
           type="button"
           onClick={handleStatusUpdate}
@@ -266,17 +399,15 @@ const handleBlur = (field: string, value: any) => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             ) : (
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-
             )}
           </svg>
         </button>
 
         {/* Market Name */}
-
         <input
           className="bg-transparent border-b border-gray-400 focus:outline-none text-lg font-bold pr-6"
           value={form.marketName}
-          onChange={(e) => setForm({ ...form, marketName: e.target.value })}
+          onChange={(e) => setForm(prev => ({ ...prev, marketName: e.target.value }))}
           onBlur={(e) => handleBlur("marketName", e.target.value)}
           disabled={!form.isActive}
         />
@@ -288,8 +419,8 @@ const handleBlur = (field: string, value: any) => {
               key={field}
               className="w-16 text-center bg-transparent border-b border-gray-500 focus:outline-none"
               value={form[field as "a" | "b" | "c"]}
-              onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-              onBlur={(e) => handleBlur(field, form[field as "a" | "b" | "c"])}
+              onChange={(e) => setForm(prev => ({ ...prev, [field]: e.target.value }))}
+              onBlur={() => handleBlur(field, form[field as "a" | "b" | "c"])}
               disabled={!form.isActive}
             />
           ))}
@@ -319,7 +450,7 @@ const handleBlur = (field: string, value: any) => {
 
       {/* Status Update Confirmation Modal */}
       {showStatusConfirm && (
-        <div className="fixed inset-0  flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-[#0b1c2c] rounded-xl p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-white">Are You Sure?</h2>
@@ -346,7 +477,7 @@ const handleBlur = (field: string, value: any) => {
               <button
                 type="button"
                 onClick={confirmStatusUpdate}
-                className={form.isActive ? "bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"  : "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"}
+                className={form.isActive ? "bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg" : "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"}
               >
                 {form.isActive ? "Deactivate" : "Activate"}
               </button>
@@ -358,6 +489,7 @@ const handleBlur = (field: string, value: any) => {
   );
 }
 
+// AddMarketModal component (same as before)
 function AddMarketModal({ onClose, onSave }: any) {
   const [formData, setFormData] = useState({
     marketName: "",
@@ -368,10 +500,9 @@ function AddMarketModal({ onClose, onSave }: any) {
     endTime: "14:00"
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create a proper date object for start and end times
     const now = new Date();
     const [startHours, startMinutes] = formData.startTime.split(':');
     const [endHours, endMinutes] = formData.endTime.split(':');
@@ -392,12 +523,12 @@ function AddMarketModal({ onClose, onSave }: any) {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
     });
-  };
+  }, [formData, onSave]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
