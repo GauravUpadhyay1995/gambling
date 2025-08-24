@@ -376,13 +376,13 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
         {form.isExpired === "true" ? (
           <div className="absolute top-0 left-0 overflow-hidden w-32 h-32">
             <div className="absolute transform -rotate-45 bg-red-600 text-white text-xs font-bold px-2 py-2 top-2 -left-2 shadow-md rounded-xl">
-              CLOSED
+              Closed
             </div>
           </div>
         ) : (
           <div className="absolute top-0 left-0 overflow-hidden w-32 h-32">
             <div className="absolute transform -rotate-45 bg-green-600 text-white text-xs font-bold px-2 py-2 top-2 -left-2 shadow-md rounded-xl">
-              OPEN
+              Open
             </div>
           </div>
         )}
@@ -394,7 +394,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
         <div className="text-center mb-3 pt-2">
           <motion.input
             whileFocus={{ scale: 1.02 }}
-            className="bg-transparent text-center border-b-2 border-gray-600 focus:border-blue-500 focus:outline-none text-xl font-bold w-full pb-2 transition-colors"
+            className="bg-transparent text-center border-b-2 border-gray-600 focus:border-blue-500 focus:outline-none text-sm font-bold w-full pb-2 transition-colors"
             value={form.marketName}
             onChange={(e) => setForm(prev => ({ ...prev, marketName: e.target.value }))}
             onBlur={(e) => handleBlur("marketName", e.target.value)}
@@ -403,7 +403,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
         </div>
 
         {/* Values */}
-        <div className="flex justify-center space-x-6 text-xl font-bold mb-4">
+        <div className="flex justify-center space-x-6 text-sm font-bold mb-4">
           {["a", "b", "c"].map((field) => (
             <motion.div
               key={field}
