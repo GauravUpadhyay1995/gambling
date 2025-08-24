@@ -488,7 +488,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
           whileTap={{ scale: 0.95 }}
         >
           {/* First button: branch */}
-          {(form.isActive && form.isExpired === "false") ? (
+          {form.isActive && ["false", "pending"].includes(form.isExpired) ? (
             <FaCodeBranch
               size={20}
               className="cursor-pointer text-blue-400 hover:text-blue-300 transition-colors"
@@ -497,6 +497,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
           ) : (
             <FaCodeBranch size={20} className="text-gray-600" />
           )}
+
 
           {/* Second button: status toggle */}
           <motion.button
