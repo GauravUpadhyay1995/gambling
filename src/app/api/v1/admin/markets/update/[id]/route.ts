@@ -18,7 +18,6 @@ export const PATCH = asyncHandler(
     }
 
     const body = await req.json();
-    console.log("Update Market Body:", body);
 
     // Update market
     const updatedMarket = await Market.findByIdAndUpdate(

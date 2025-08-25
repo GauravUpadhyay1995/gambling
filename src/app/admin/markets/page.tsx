@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { FaCodeBranch, FaTimes, FaCheck } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-
+import toast from 'react-hot-toast';
 // Simple cache mechanism
 const apiCache = new Map();
 
@@ -49,6 +49,70 @@ export default function MarketList() {
       setLoading(false);
     }
   }, []);
+  const handleResultDeclare = useCallback(
+    async (id: string, currentStatus: boolean) => {
+      // Create a custom toast for confirmation
+      const confirmed = await new Promise((resolve) => {
+        toast.custom((t) => (
+          <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} 
+           max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
+            <div className="flex-1 w-0 p-4">
+              <div className="flex items-start">
+                <div className="ml-3 flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    Confirm Action
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {`Are you sure you want to ${currentStatus ? 'undeclare' : 'declare'} this result?`}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex border-l border-gray-200">
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  resolve(true);
+                }}
+                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-green-600 hover:text-green-500 focus:outline-none"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  resolve(false);
+                }}
+                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ), { duration: Infinity });
+      });
+
+      if (!confirmed) return;
+
+      try {
+        await fetch(`/api/v1/admin/markets/update/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isDeclared: !currentStatus }),
+        });
+
+        apiCache.delete('markets-list');
+        hasFetchedMarkets.current = false;
+        fetchMarkets();
+
+        toast.success(`Result ${currentStatus ? 'undeclared' : 'declared'} successfully`);
+      } catch (err) {
+        console.error("Status update failed", err);
+        toast.error('Failed to update status');
+      }
+    },
+    [fetchMarkets]
+  );
 
   // Fetch ratings with caching
   const fetchRatings = useCallback(async () => {
@@ -167,7 +231,7 @@ export default function MarketList() {
     <div className="min-h-screen p-6">
       <div className={showAddModal ? "blur-sm" : ""}>
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Market Dashboard</h1>
+          <h1 className="text-2xl ">Market Dashboard</h1>
           <button
             onClick={() => setShowAddModal(true)}
             className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium"
@@ -186,6 +250,7 @@ export default function MarketList() {
               ratings={ratings}
               onUpdate={updateMarket}
               onStatusUpdate={updateMarketStatus}
+              onResultDeclare={handleResultDeclare}
             />
           ))}
         </div>
@@ -200,6 +265,7 @@ export default function MarketList() {
               ratings={ratings}
               onUpdate={updateMarket}
               onStatusUpdate={updateMarketStatus}
+              onResultDeclare={handleResultDeclare}
             />
           ))}
         </div>
@@ -214,8 +280,9 @@ export default function MarketList() {
 }
 
 // MarketCard component - no API calls here
-function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
+function MarketCard({ market, ratings, onUpdate, onStatusUpdate, onResultDeclare }: any) {
   const [form, setForm] = useState({
+    _id: market._id,
     marketName: market.marketName,
     a: market.marketValue?.a || "",
     b: market.marketValue?.b || "",
@@ -224,6 +291,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
     endDate: market.endDate,
     isActive: market.isActive,
     isExpired: market.isExpired,
+    isDeclared: market.isDeclared,
   });
 
   const [showStatusConfirm, setShowStatusConfirm] = useState(false);
@@ -259,6 +327,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
   const handleStatusUpdate = useCallback(() => {
     setShowStatusConfirm(true);
   }, []);
+
 
   const confirmStatusUpdate = useCallback(() => {
     onStatusUpdate(market._id, form.isActive);
@@ -360,6 +429,35 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
       transition: { duration: 0.3, delay: 0.2 }
     }
   };
+  const getButtonConfig = () => {
+    if (form.isExpired === "true" && form.isActive && form.isDeclared) {
+      return {
+        label: "Result Announced",
+        className:
+          "rounded-md text-xs px-2 py-1 shadow-sm bg-gradient-to-r from-green-700 to-green-500 text-green-100 cursor-not-allowed",
+        disabled: true,
+      };
+    }
+
+    if (form.isExpired === "true" && form.isActive) {
+      return {
+        label: "Declare",
+        className:
+          "rounded-md text-xs px-2 py-1 shadow-sm bg-gradient-to-r from-green-700 to-green-500 text-white hover:from-green-600 hover:to-green-700",
+        onClick: () => onResultDeclare(form._id, form.isDeclared),
+      };
+    }
+
+    return {
+      label: "Comming Soon",
+      className:
+        "rounded-md text-xs px-2 py-1 shadow-sm bg-gradient-to-r from-yellow-700 to-yellow-500 text-yellow-100 cursor-not-allowed",
+      disabled: true,
+    };
+  };
+
+
+  const { label, className, onClick, disabled } = getButtonConfig();
   return (
     <>
       <motion.div
@@ -373,16 +471,19 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
       >
         {/* Rating Mapping Button */}
         {/* Expired Ribbon */}
-        {form.isExpired === "true" ? (
+        {form.isExpired !== "true" ? (
           <div className="absolute top-0 left-0 overflow-hidden w-32 h-32">
-            <div className="absolute transform -rotate-45 bg-red-600 text-white text-xs font-bold px-2 py-2 top-2 -left-2 shadow-md rounded-xl">
-              Closed
+            <div className={`absolute transform -rotate-45 ${form.isExpired === "pending"
+              ? 'bg-gradient-to-r from-yellow-700 to-yellow-500 text-yellow-100'
+              : 'bg-gradient-to-r from-green-900 to-green-400 text-green-100'
+              }  text-xs  px-2 py-2 top-2 -left-2 shadow-md rounded-xl`}>
+              {form.isExpired === "pending" ? "Open Soon" : "O p e n"}
             </div>
           </div>
         ) : (
           <div className="absolute top-0 left-0 overflow-hidden w-32 h-32">
-            <div className="absolute transform -rotate-45 bg-green-600 text-white text-xs font-bold px-2 py-2 top-2 -left-2 shadow-md rounded-xl">
-              Open
+            <div className="absolute transform -rotate-45 bg-gradient-to-r from-red-900 to-red-400 text-red-100  text-xs  px-2 py-2 top-2 -left-2 shadow-md rounded-xl">
+              C l o s e d
             </div>
           </div>
         )}
@@ -394,7 +495,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
         <div className="text-center mb-3 pt-2">
           <motion.input
             whileFocus={{ scale: 1.02 }}
-            className="bg-transparent text-center border-b-2 border-gray-600 focus:border-blue-500 focus:outline-none text-sm font-bold w-full pb-2 transition-colors"
+            className="bg-transparent text-center border-b-2 border-gray-600 focus:border-blue-500 focus:outline-none text-sm  w-full pb-2 transition-colors"
             value={form.marketName}
             onChange={(e) => setForm(prev => ({ ...prev, marketName: e.target.value }))}
             onBlur={(e) => handleBlur("marketName", e.target.value)}
@@ -403,7 +504,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
         </div>
 
         {/* Values */}
-        <div className="flex justify-center space-x-6 text-sm font-bold mb-4">
+        <div className="flex justify-center space-x-6 text-sm  mb-4">
           {["a", "b", "c"].map((field) => (
             <motion.div
               key={field}
@@ -464,7 +565,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
           </div>
 
         </motion.div>
-
+        {/* 
         <motion.div
           className={`text-xs font-semibold text-center mt-1 py-1 rounded-full ${form.isActive
             ? 'bg-green-900/30 text-green-400'
@@ -480,7 +581,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
           }}
         >
           {form.isActive ? '🟢 ACTIVE' : '🔴 INACTIVE'}
-        </motion.div>
+        </motion.div> */}
 
         <motion.div
           className="flex justify-center items-center space-x-3"
@@ -507,8 +608,8 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
             type="button"
             onClick={handleStatusUpdate}
             className={`rounded-full p-2 shadow-lg ${form.isActive
-              ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-              : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+              ? "bg-gradient-to-r from-green-900 to-green-400 text-green-100 hover:from-green-600 hover:to-green-700"
+              : "bg-gradient-to-r from-red-900 to-red-400 text-red-100 hover:from-red-600 hover:to-red-700"
               } transition-all duration-200`}
             title={form.isActive ? "Deactivate Market" : "Activate Market"}
           >
@@ -518,6 +619,23 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
               <FaTimes size={12} className="text-white" />
             )}
           </motion.button>
+          {form.isActive && (
+            <motion.button
+              variants={buttonVariants}
+              whileHover="hover"
+              whileTap="tap"
+              type="button"
+              onClick={onClick}
+              disabled={disabled}
+              className={className}
+              title={label}
+            >
+              {label}
+            </motion.button>
+          )}
+          {/* Third button: Declare/Result Announced/Coming Soon */}
+
+
         </motion.div>
       </motion.div>
 
@@ -539,7 +657,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
               className="bg-gradient-to-b from-[#0f2e45] to-[#0a1723] border border-gray-700 p-6 rounded-2xl shadow-2xl w-full max-w-md"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-xl font-bold mb-5 text-white text-center">Mapping Rating</h2>
+              <h2 className="text-xl  mb-5 text-white text-center">Mapping Rating</h2>
 
               <div className="flex flex-col gap-3 max-h-60 overflow-y-auto pr-2">
                 {ratings
@@ -603,7 +721,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate }: any) {
               className="bg-gradient-to-b from-[#0f2e45] to-[#0a1723] border border-gray-700 rounded-2xl p-6 w-full max-w-md"
             >
               <div className="flex justify-between items-center mb-5">
-                <h2 className="text-xl font-bold text-white">Confirm Action</h2>
+                <h2 className="text-xl  text-white">Confirm Action</h2>
                 <motion.button
                   onClick={cancelStatusUpdate}
                   className="text-gray-400 hover:text-white text-xl"
@@ -699,7 +817,7 @@ function AddMarketModal({ onClose, onSave }: any) {
     <div className="fixed inset-0 flex items-center justify-center z-50">
       <div className="bg-[#0b1c2c] rounded-xl p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">Add New Market</h2>
+          <h2 className="text-xl  text-white">Add New Market</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">
             ✕
           </button>

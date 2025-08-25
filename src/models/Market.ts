@@ -27,6 +27,10 @@ const marketSchema = new Schema({
         type: Boolean,
         default: true,
     },
+    isDeclared: {
+        type: Boolean,
+        default: false,
+    },
     createdBy: {
         type: Types.ObjectId,
         ref: 'User',

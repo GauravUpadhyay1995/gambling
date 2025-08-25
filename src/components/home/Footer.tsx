@@ -222,42 +222,7 @@ const Footer = () => {
             </ul>
           </motion.div>
 
-          {/* Column 3: Address & Map Link */}
-          <motion.div variants={itemVariants}>
-            <motion.h3
-              className="text-lg font-bold  text-white dark:text-white mb-5 relative inline-block after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-orange-500"
-              whileHover={{ scale: 1.02 }}
-            >
-              Location
-            </motion.h3>
-            <motion.address
-              className="not-italic text-base  text-white dark:text-gray-300 space-y-2 flex flex-col items-center md:items-start"
-              whileHover={{ x: 5 }}
-            >
-              <span>{process.env.NEXT_PUBLIC_COMPANY_NAME} Foundation
-              </span>
-              <span>Application & Innovation Center</span>
-              <span>GB-2, Research and Innovation Park</span>
-
-              <span> New Delhi</span>
-            </motion.address>
-            <motion.div className="mt-4" variants={itemVariants}>
-              <Link
-                href="https://www.google.com/maps/place/Indian+Institute+of+Technology+Delhi/@28.5451578,77.192585,17z"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 bg-orange-500 text-white font-semibold rounded-full
-             hover:bg-orange-600 transition-colors duration-300 shadow-md hover:shadow-lg
-             focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                </svg>
-                View on Map
-              </Link>
-
-            </motion.div>
-          </motion.div>
+        
           {/* Column 4: Address & Map Link */}
           <motion.div variants={itemVariants}>
             <motion.h3
