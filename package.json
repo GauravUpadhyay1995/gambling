@@ -37,6 +37,7 @@
     "canvas-confetti": "^1.9.3",
     "chart.js": "^4.4.9",
     "date-fns": "^4.1.0",
+    "file-saver": "^2.0.5",
     "flatpickr": "^4.6.13",
     "framer-motion": "^12.23.12",
     "joi": "^17.13.3",

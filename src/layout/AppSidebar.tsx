@@ -67,11 +67,12 @@ const AppSidebar: React.FC = () => {
     },
     
     {
-      name: "Winners",
+      name: "Bettings",
      icon: <ShootingStarIcon />,
-      path: "/admin/winners",
+      path: "/admin/bettings",
       subItems: [
-        { name: "All Winner", path: "/admin/winners", pro: false },
+        { name: "All Bettings", path: "/admin/bettings", pro: false },
+         { name: "Winners", path: "/admin/bettings/winners", pro: false },
        
       ],
     },
