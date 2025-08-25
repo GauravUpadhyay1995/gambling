@@ -7,7 +7,6 @@ import { Customer } from '@/models/Customer';
 
 export const GET = verifyAdmin(asyncHandler(async (req: NextRequest) => {
     await connectToDB();
-    // console.log('>>>>>>>>...',req); 
 
     const searchParams = req.nextUrl.searchParams;
     const name = searchParams.get('name');
@@ -27,6 +26,7 @@ export const GET = verifyAdmin(asyncHandler(async (req: NextRequest) => {
         searchConditions.push({ text: { query: name, path: 'name' } });
     }
 
+    // Main pipeline for fetching customers
     const pipeline: any[] = [];
 
     // 🔍 Full-text search if provided
@@ -42,22 +42,25 @@ export const GET = verifyAdmin(asyncHandler(async (req: NextRequest) => {
     // 🧾 Apply mobile match if present
     if (Object.keys(match).length > 0) pipeline.push({ $match: match });
 
+    // Sort by createdDate descending (newest first)
+    pipeline.push({ $sort: { createdAt: -1 } });
 
-
-    // ⏬ Pagination
+    // Pipeline for counting total records (without pagination stages)
+    const countPipeline = [...pipeline];
+    
+    // ⏬ Pagination for main pipeline
     if (!showAll) {
         pipeline.push({ $skip: skip }, { $limit: limit });
     }
+    
+    // Remove password field
     pipeline.push({
         $project: { password: 0 }
     });
 
     const [customers, totalCountResult] = await Promise.all([
         Customer.aggregate(pipeline),
-        Customer.aggregate([
-            ...pipeline.filter(stage => !('$skip' in stage || '$limit' in stage)),
-            { $count: 'count' }
-        ])
+        Customer.aggregate([...countPipeline, { $count: 'count' }])
     ]);
 
     const totalRecords = totalCountResult[0]?.count || 0;
