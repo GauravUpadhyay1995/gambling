@@ -54,6 +54,7 @@ export const GET = asyncHandler(async (req: NextRequest) => {
                 status: "$customer_betting_result",
                 choosen_number: "$choosen_number",
                 opening_result: "$opening_result",
+                amount: "$amount",
 
                 createdAt: 1,
                 market_name: "$market.marketName",

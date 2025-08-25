@@ -11,6 +11,7 @@ export interface IBettingInput {
   market_id: string;
   rating_id: string;
   choosen_number?: string;
+  amount: number;
 }
 
 export const POST = asyncHandler(async (req: NextRequest) => {

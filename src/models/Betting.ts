@@ -28,6 +28,10 @@ const bettingSchema = new mongoose.Schema({
         select: false,
 
     },
+    amount: {
+        type: String,
+        required: true,
+    },
     customer_betting_result: {
         type: String,
         enum: ["Win", "Loss", "Pending"], // ✅ only these values allowed

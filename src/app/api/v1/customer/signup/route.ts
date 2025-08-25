@@ -67,10 +67,13 @@ export const POST = asyncHandler(async (req: NextRequest) => {
     const response = NextResponse.json({
         success: true,
         message: 'Customer registered successfully',
-        id: createdCustomer._id.toString(),
-        mobile: createdCustomer.mobile,
-        name: createdCustomer.name,
+
         token: token,
+        data: {
+            id: createdCustomer._id.toString(),
+            mobile: createdCustomer.mobile,
+            name: createdCustomer.name,
+        }
 
     });
     response.cookies.set('customer_token', token, {

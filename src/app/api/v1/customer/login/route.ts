@@ -63,6 +63,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
         data: {
             mobile: user.mobile,
             name: user.name,
+            id: user._id.toString(),
         },
     });
 

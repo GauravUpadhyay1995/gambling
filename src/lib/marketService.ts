@@ -23,14 +23,14 @@ export async function fetchMarkets(source: string | undefined = "frontend") {
     const startMinutes = start.getHours() * 60 + start.getMinutes();
     const endMinutes = end.getHours() * 60 + end.getMinutes();
 
-    let isExpired: "true" | "false" | "pending";
+    let isExpired: "Closed" | "Opened" | "Upcomming";
 
     if (nowMinutes < startMinutes) {
-      isExpired = "pending";
+      isExpired = "Upcomming";
     } else if (nowMinutes > endMinutes) {
-      isExpired = "true";
+      isExpired = "Closed";
     } else {
-      isExpired = "false";
+      isExpired = "Opened";
     }
 
     return {

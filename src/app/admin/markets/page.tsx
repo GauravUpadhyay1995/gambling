@@ -430,7 +430,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate, onResultDeclare
     }
   };
   const getButtonConfig = () => {
-    if (form.isExpired === "true" && form.isActive && form.isDeclared) {
+    if (form.isExpired === "Closed" && form.isActive && form.isDeclared) {
       return {
         label: "Result Announced",
         className:
@@ -439,7 +439,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate, onResultDeclare
       };
     }
 
-    if (form.isExpired === "true" && form.isActive) {
+    if (form.isExpired === "Closed" && form.isActive) {
       return {
         label: "Declare",
         className:
@@ -471,13 +471,13 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate, onResultDeclare
       >
         {/* Rating Mapping Button */}
         {/* Expired Ribbon */}
-        {form.isExpired !== "true" ? (
+        {form.isExpired !== "Closed" ? (
           <div className="absolute top-0 left-0 overflow-hidden w-32 h-32">
-            <div className={`absolute transform -rotate-45 ${form.isExpired === "pending"
+            <div className={`absolute transform -rotate-45 ${form.isExpired === "Upcomming"
               ? 'bg-gradient-to-r from-yellow-700 to-yellow-500 text-yellow-100'
               : 'bg-gradient-to-r from-green-900 to-green-400 text-green-100'
               }  text-xs  px-2 py-2 top-2 -left-2 shadow-md rounded-xl`}>
-              {form.isExpired === "pending" ? "Open Soon" : "O p e n"}
+              {form.isExpired}
             </div>
           </div>
         ) : (
@@ -589,7 +589,7 @@ function MarketCard({ market, ratings, onUpdate, onStatusUpdate, onResultDeclare
           whileTap={{ scale: 0.95 }}
         >
           {/* First button: branch */}
-          {form.isActive && ["false", "pending"].includes(form.isExpired) ? (
+          {form.isActive && ["Opened", "Upcomming"].includes(form.isExpired) ? (
             <FaCodeBranch
               size={20}
               className="cursor-pointer text-blue-400 hover:text-blue-300 transition-colors"

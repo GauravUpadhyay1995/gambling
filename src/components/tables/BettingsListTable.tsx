@@ -16,6 +16,7 @@ interface Betting {
     rating_name: string;
     customer_name: string;
     choosen_number: string; // Added to match usage in table
+     amount: number; // Added to match usage in table
 }
 
 interface BettingApiResponse {
@@ -83,6 +84,8 @@ export default function BettingsListTable({ initialData }: Props) {
         "Market": b.market_name,
         "Rating": b.rating_name,
         "Status": b.status,
+        "Amount": (b as any).amount || '', // Type assertion to access amount
+        "Chosen Number": b.choosen_number,
       }))
     );
 
@@ -128,6 +131,9 @@ export default function BettingsListTable({ initialData }: Props) {
                                 <TableCell isHeader className="px-5 py-3 text-gray-500 text-theme-xs">
                                     Game Type
                                 </TableCell>
+                                 <TableCell isHeader className="px-5 py-3 text-gray-500 text-theme-xs">
+                                   Betting Amount
+                                </TableCell>
                                 <TableCell isHeader className="px-5 py-3 text-gray-500 text-theme-xs">
                                     Betting Number
                                 </TableCell>
@@ -159,6 +165,9 @@ export default function BettingsListTable({ initialData }: Props) {
                                         </TableCell>
                                         <TableCell className="px-5 py-2 text-theme-sm text-center">
                                             {betting.rating_name}
+                                        </TableCell>
+                                        <TableCell className="px-5 py-2 text-theme-sm text-center">
+                                            {betting.amount?betting.amount:'-'}
                                         </TableCell>
                                         <TableCell className="px-5 py-2 text-theme-sm text-center">
                                             {betting.choosen_number}
