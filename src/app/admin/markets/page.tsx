@@ -95,7 +95,7 @@ export default function MarketList() {
       if (!confirmed) return;
 
       try {
-        await fetch(`/api/v1/admin/markets/update/${id}`, {
+        await fetch(`/api/v1/admin/markets/results/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ isDeclared: !currentStatus }),

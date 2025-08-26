@@ -16,7 +16,7 @@ interface Betting {
     rating_name: string;
     customer_name: string;
     choosen_number: string; // Added to match usage in table
-     amount: number; // Added to match usage in table
+    amount: number; // Added to match usage in table
 }
 
 interface BettingApiResponse {
@@ -70,32 +70,32 @@ export default function BettingsListTable({ initialData }: Props) {
     useEffect(() => {
         fetchBettings(currentPage, limit);
     }, [currentPage, limit, fetchBettings]);
-  const exportToExcel = () => {
-    if (!bettings.length) {
-      toast.error("No data to export");
-      return;
-    }
+    const exportToExcel = () => {
+        if (!bettings.length) {
+            toast.error("No data to export");
+            return;
+        }
 
-    const worksheet = XLSX.utils.json_to_sheet(
-      bettings.map((b, idx) => ({
-        "Sr No.": (currentPage - 1) * limit + idx + 1,
-        "Date": new Date(b.createdAt).toLocaleString(),
-        "Customer": b.customer_name,
-        "Market": b.market_name,
-        "Rating": b.rating_name,
-        "Status": b.status,
-        "Amount": (b as any).amount || '', // Type assertion to access amount
-        "Chosen Number": b.choosen_number,
-      }))
-    );
+        const worksheet = XLSX.utils.json_to_sheet(
+            bettings.map((b, idx) => ({
+                "Sr No.": (currentPage - 1) * limit + idx + 1,
+                "Date": new Date(b.createdAt).toLocaleString(),
+                "Customer": b.customer_name,
+                "Market": b.market_name,
+                "Rating": b.rating_name,
+                "Status": b.status,
+                "Amount": (b as any).amount || '', // Type assertion to access amount
+                "Chosen Number": b.choosen_number,
+            }))
+        );
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Bettings");
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Bettings");
 
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, `bettings_page_${currentPage}.xlsx`);
-  };
+        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+        saveAs(data, `bettings_page_${currentPage}.xlsx`);
+    };
     return (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] relative">
             {loading && (
@@ -103,14 +103,14 @@ export default function BettingsListTable({ initialData }: Props) {
                     <PageLoader />
                 </div>
             )}
-  <div className="flex justify-end p-4">
-        <button
-          onClick={exportToExcel}
-          className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition"
-        >
-          Export to Excel
-        </button>
-      </div>
+            <div className="flex justify-end p-4">
+                <button
+                    onClick={exportToExcel}
+                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition"
+                >
+                    Export to Excel
+                </button>
+            </div>
             <div className="max-w-full overflow-x-auto">
                 <div className="min-w-[700px] md:min-w-[900px]">
                     <Table>
@@ -131,8 +131,11 @@ export default function BettingsListTable({ initialData }: Props) {
                                 <TableCell isHeader className="px-5 py-3 text-gray-500 text-theme-xs">
                                     Game Type
                                 </TableCell>
-                                 <TableCell isHeader className="px-5 py-3 text-gray-500 text-theme-xs">
-                                   Betting Amount
+                                <TableCell isHeader className="px-5 py-3 text-gray-500 text-theme-xs">
+                                    Betting Amount
+                                </TableCell>
+                                <TableCell isHeader className="px-5 py-3 text-gray-500 text-theme-xs">
+                                    Betting Status
                                 </TableCell>
                                 <TableCell isHeader className="px-5 py-3 text-gray-500 text-theme-xs">
                                     Betting Number
@@ -167,8 +170,24 @@ export default function BettingsListTable({ initialData }: Props) {
                                             {betting.rating_name}
                                         </TableCell>
                                         <TableCell className="px-5 py-2 text-theme-sm text-center">
-                                            {betting.amount?betting.amount:'-'}
+                                            {betting.amount ? betting.amount : '-'}
                                         </TableCell>
+                                        <TableCell className="px-5 py-2 text-theme-sm text-center">
+                                            {betting.status ? (
+                                                <span
+                                                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium
+                                                     ${betting.status === "Win" ? "bg-green-100 text-green-700" : ""}
+                                                     ${betting.status === "Loss" ? "bg-red-100 text-red-700" : ""} 
+                                                     ${betting.status === "Pending" ? "bg-yellow-100 text-yellow-700" : ""}
+                                                      `}
+                                                >
+                                                    {betting.status}
+                                                </span>
+                                            ) : (
+                                                "-"
+                                            )}
+                                        </TableCell>
+
                                         <TableCell className="px-5 py-2 text-theme-sm text-center">
                                             {betting.choosen_number}
                                         </TableCell>
