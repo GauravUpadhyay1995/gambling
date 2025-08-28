@@ -19,13 +19,13 @@ const bettingSchema = new mongoose.Schema({
     choosen_number: {
         type: String,
         required: false,
-        select: false,
+        // select: false,
     },
     opening_result: {
         type: String,
         required: true,
         default: "0",
-        select: false,
+        // select: false,
 
     },
     amount: {

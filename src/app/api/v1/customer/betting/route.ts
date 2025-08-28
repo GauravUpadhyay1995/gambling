@@ -64,16 +64,16 @@ export const POST = asyncHandler(async (req: NextRequest) => {
   const endMinutes = endDate.getHours() * 60 + endDate.getMinutes();
 
   // ✅ Check if market has not opened yet
-  if (currentMinutes < startMinutes) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Market not opened yet, please wait",
-        data: null,
-      },
-      { status: 403 }
-    );
-  }
+  // if (currentMinutes < startMinutes) {
+  //   return NextResponse.json(
+  //     {
+  //       success: false,
+  //       message: "Market not opened yet, please wait",
+  //       data: null,
+  //     },
+  //     { status: 403 }
+  //   );
+  // }
 
   // ✅ Check if market is already closed
   if (currentMinutes > endMinutes) {

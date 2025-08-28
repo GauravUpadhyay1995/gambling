@@ -109,12 +109,12 @@ export default function MarketList() {
       <div className={showAddModal ? "blur-sm" : ""}>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Rating Dashboard</h1>
-          <button
+          {/* <button
             onClick={() => setShowAddModal(true)}
             className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium"
           >
             Add Rating
-          </button>
+          </button> */}
         </div>
 
         {/* ✅ Active Markets */}
@@ -131,7 +131,7 @@ export default function MarketList() {
         </div>
 
         {/* ✅ Inactive Markets */}
-        <h2 className="text-xl text-center font-semibold mb-4 text-red-500">INACTIVE RATINGS</h2>
+        {/* <h2 className="text-xl text-center font-semibold mb-4 text-red-500">INACTIVE RATINGS</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {ratings.filter((m) => !m.isActive).map((rating) => (
             <RatingCard
@@ -141,7 +141,7 @@ export default function MarketList() {
               onStatusUpdate={updateRatingStatus}
             />
           ))}
-        </div>
+        </div> */}
       </div>
 
       {/* Add Rating Modal */}
@@ -230,7 +230,7 @@ function RatingCard({ rating, onUpdate, onStatusUpdate }: any) {
     <>
       <div className=" bg-[#0b1c2c] text-white p-4 rounded-xl shadow-lg flex flex-col space-y-3 relative group">
         {/* Status Update Button */}
-        <button
+        {/* <button
           type="button"
           onClick={handleStatusUpdate}
           className={`absolute top-2 right-2 ${form.isActive ? 'bg-green-600' : 'bg-orange-600'} rounded-full p-1.5 shadow-md opacity-100 transition-opacity duration-200`}
@@ -253,16 +253,17 @@ function RatingCard({ rating, onUpdate, onStatusUpdate }: any) {
 
             )}
           </svg>
-        </button>
+        </button> */}
 
         {/* Rating Name */}
 
         <input
           className="bg-transparent border-b border-gray-400 focus:outline-none text-sm font-bold pr-6"
-          value={form.ratingName}
+          value={`${form.ratingName} - ${form.a} ka ${form.b}`}
           onChange={(e) => setForm({ ...form, ratingName: e.target.value })}
           onBlur={(e) => handleBlur("ratingName", e.target.value)}
-          disabled={!form.isActive}
+          // disabled={!form.isActive}
+          disabled
         />
 
         {/* Values */}

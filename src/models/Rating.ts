@@ -6,14 +6,19 @@ const ratingSchema = new Schema({
         required: true,
         trim: true,
     },
+    type: {
+        type: String,
+        required: true,
+        trim: true,
+    },
 
     convertValue:
-        {
-            a: { type: String, required: true, default: '***' },
-            b: { type: String, required: true, default: '**' },
-           
-        },
-   
+    {
+        a: { type: String, required: true, default: '***' },
+        b: { type: String, required: true, default: '**' },
+
+    },
+
 
     isActive: {
         type: Boolean,
@@ -32,5 +37,5 @@ const ratingSchema = new Schema({
 }, { timestamps: true });
 
 export const Rating = mongoose.models.Rating
-  ? mongoose.model('Rating')
-  : mongoose.model('Rating', ratingSchema);
+    ? mongoose.model('Rating')
+    : mongoose.model('Rating', ratingSchema);
