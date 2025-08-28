@@ -4,7 +4,7 @@ export const createCustomerSchema = Joi.object({
     name: Joi.string().required().trim(),
     password: Joi.string().required().trim(),
     mobile: Joi.string().required().trim(),
-    pin: Joi.string().min(4).required().trim(),
+    // pin: Joi.string().min(4).required().trim(),
 
 });
 
@@ -22,10 +22,10 @@ export const loginCustomerSchema = Joi.object({
         'string.min': 'Password must be at least 6 characters',
         'any.required': 'Password is required'
     }),
-    pin: Joi.string().min(4).required().messages({
-        'string.min': 'Pin must be at least 4 characters',
-        'any.required': 'Pin is required'
-    })
+    // pin: Joi.string().min(4).required().messages({
+    //     'string.min': 'Pin must be at least 4 characters',
+    //     'any.required': 'Pin is required'
+    // })
 
 });
 

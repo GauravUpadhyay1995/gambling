@@ -17,11 +17,11 @@ const customerSchema = new mongoose.Schema({
     unique: true, // ✅ Unique index
     index: true,
   },
-  pin: {
-    type: String,
-    required: false,
-    select: false,
-  },
+  // pin: {
+  //   type: String,
+  //   required: false,
+  //   select: false,
+  // },
   isActive: {
     type: Boolean,
     default: true,

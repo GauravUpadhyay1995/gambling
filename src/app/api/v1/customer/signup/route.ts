@@ -11,7 +11,7 @@ type CreateCustomerBody = {
     name: string;
     password: string;
     mobile: string;
-    pin: string;
+    // pin: string;
     isActive?: boolean;
 
 };
