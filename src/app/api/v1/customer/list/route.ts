@@ -4,6 +4,7 @@ import { verifyAdmin } from '@/lib/verifyAdmin';
 import { asyncHandler } from '@/lib/asyncHandler';
 import { sendResponse } from '@/lib/sendResponse';
 import { Customer } from '@/models/Customer';
+import { Balance } from "@/models/Balance";
 
 export const GET = verifyAdmin(asyncHandler(async (req: NextRequest) => {
     await connectToDB();
@@ -41,18 +42,25 @@ export const GET = verifyAdmin(asyncHandler(async (req: NextRequest) => {
 
     // 🧾 Apply mobile match if present
     if (Object.keys(match).length > 0) pipeline.push({ $match: match });
-
+    pipeline.push({
+        $lookup: {
+            from: "balances",          // collection name in MongoDB (usually lowercase + plural)
+            localField: "_id",         // field in Customer
+            foreignField: "customer_id", // field in Balance
+            as: "balanceInfo"
+        }
+    });
     // Sort by createdDate descending (newest first)
     pipeline.push({ $sort: { createdAt: -1 } });
 
     // Pipeline for counting total records (without pagination stages)
     const countPipeline = [...pipeline];
-    
+
     // ⏬ Pagination for main pipeline
     if (!showAll) {
         pipeline.push({ $skip: skip }, { $limit: limit });
     }
-    
+
     // Remove password field
     pipeline.push({
         $project: { password: 0 }

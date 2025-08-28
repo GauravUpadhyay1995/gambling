@@ -73,6 +73,7 @@ export const GET = asyncHandler(async (req: NextRequest) => {
 
     // ✅ Run aggregation
     const results = await Betting.aggregate(pipeline);
+    console.log("results", results);
 
     // ✅ Get total count for pagination
     const total = await Betting.countDocuments();

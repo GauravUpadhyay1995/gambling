@@ -70,11 +70,11 @@ const AppSidebar: React.FC = () => {
       name: "Bettings",
      icon: <ShootingStarIcon />,
       path: "/admin/bettings",
-      subItems: [
-        { name: "All Bettings", path: "/admin/bettings", pro: false },
-         { name: "Winners", path: "/admin/bettings/winners", pro: false },
+      // subItems: [
+      //   { name: "All Bettings", path: "/admin/bettings", pro: false },
+      //    { name: "Winners", path: "/admin/bettings/winners", pro: false },
        
-      ],
+      // ],
     },
     
    
@@ -82,9 +82,9 @@ const AppSidebar: React.FC = () => {
       name: "Payments",
       icon: <FolderIcon />,
       path: "/admin/payments",
-      subItems: [
-        { name: "All Payment", path: "/admin/payments", pro: false },
-      ],
+      // subItems: [
+      //   { name: "All Payment", path: "/admin/payments", pro: false },
+      // ],
     },
      {
       name: "Users",

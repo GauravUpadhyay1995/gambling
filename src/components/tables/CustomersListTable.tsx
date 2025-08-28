@@ -374,6 +374,12 @@ export default function UsersListTable({ initialData }: Props) {
                                     isHeader
                                     className="px-5 py-3 font-medium text-start text-theme-xs text-gray-500"
                                 >
+                                    Balance
+                                </TableCell>
+                                <TableCell
+                                    isHeader
+                                    className="px-5 py-3 font-medium text-start text-theme-xs text-gray-500"
+                                >
                                     Status
                                 </TableCell>
                             </TableRow>
@@ -413,6 +419,12 @@ export default function UsersListTable({ initialData }: Props) {
                                         <TableCell className="px-5 py-1 text-start text-theme-sm text-gray-600 dark:text-gray-400">
                                             {user.mobile}
                                         </TableCell>
+                                        <TableCell className="px-5 py-1 text-start text-theme-sm text-gray-600 dark:text-gray-400">
+                                            {user?.balanceInfo?.length
+                                                ? user.balanceInfo[0].balance_amount
+                                                : 0}
+                                        </TableCell>
+
 
                                         <TableCell className="px-5 py-1 text-start text-theme-sm text-gray-600 dark:text-gray-400">
                                             <div className="flex items-center space-x-2">
